@@ -1,0 +1,592 @@
+// Nivasa Smart Society Management — Prisma Schema
+// PostgreSQL database schema with full normalization
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================================
+// ENUMS
+// ============================================================
+
+enum UserRole {
+  ADMIN
+  RESIDENT
+  SECURITY
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+}
+
+enum OccupancyStatus {
+  VACANT
+  OCCUPIED
+}
+
+enum ResidentType {
+  OWNER
+  TENANT
+}
+
+enum VisitorStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  CHECKED_IN
+  CHECKED_OUT
+  EXPIRED
+}
+
+enum VisitorType {
+  GUEST
+  DELIVERY
+  SERVICE
+  CONTRACTOR
+  OTHER
+}
+
+enum BillStatus {
+  UNPAID
+  PARTIALLY_PAID
+  PAID
+  OVERDUE
+}
+
+enum PaymentMethod {
+  DEMO_PAYMENT
+  UPI
+  BANK_TRANSFER
+  CASH
+  CHEQUE
+}
+
+enum PaymentStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  REFUNDED
+}
+
+enum ComplaintStatus {
+  SUBMITTED
+  ASSIGNED
+  IN_PROGRESS
+  RESOLVED
+  CLOSED
+}
+
+enum ComplaintPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+  COMPLETED
+  REJECTED
+}
+
+enum AnnouncementCategory {
+  GENERAL
+  MAINTENANCE
+  SECURITY
+  EVENT
+  EMERGENCY
+  POLICY
+}
+
+enum AnnouncementStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+enum NotificationType {
+  VISITOR_REQUEST
+  VISITOR_APPROVED
+  VISITOR_REJECTED
+  VISITOR_CHECKIN
+  VISITOR_CHECKOUT
+  MAINTENANCE_BILL
+  PAYMENT_RECEIVED
+  COMPLAINT_UPDATE
+  BOOKING_CONFIRMED
+  BOOKING_REJECTED
+  BOOKING_CANCELLED
+  ANNOUNCEMENT
+  SYSTEM
+}
+
+enum AuditAction {
+  USER_CREATED
+  USER_UPDATED
+  USER_DEACTIVATED
+  RESIDENT_CREATED
+  RESIDENT_UPDATED
+  APARTMENT_UPDATED
+  VISITOR_REGISTERED
+  VISITOR_APPROVED
+  VISITOR_REJECTED
+  VISITOR_CHECKIN
+  VISITOR_CHECKOUT
+  BILL_GENERATED
+  PAYMENT_RECORDED
+  COMPLAINT_SUBMITTED
+  COMPLAINT_ASSIGNED
+  COMPLAINT_RESOLVED
+  BOOKING_CREATED
+  BOOKING_CONFIRMED
+  BOOKING_CANCELLED
+  ANNOUNCEMENT_PUBLISHED
+  ADMIN_ACTION
+}
+
+// ============================================================
+// CORE MODELS
+// ============================================================
+
+model Society {
+  id          String   @id @default(cuid())
+  name        String
+  address     String
+  city        String
+  state       String
+  pincode     String
+  phone       String?
+  email       String?
+  description String?
+  logoUrl     String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  apartments  Apartment[]
+  announcements Announcement[]
+  amenities   Amenity[]
+
+  @@map("societies")
+}
+
+model User {
+  id           String     @id @default(cuid())
+  email        String     @unique
+  passwordHash String
+  firstName    String
+  lastName     String
+  phone        String?
+  role         UserRole
+  status       UserStatus @default(ACTIVE)
+  avatarUrl    String?
+  lastLoginAt  DateTime?
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  residentProfile    ResidentProfile?
+  notifications      Notification[]
+  auditLogsAsActor   AuditLog[]      @relation("AuditActor")
+  bookingsMade       AmenityBooking[]
+  complaintsComments ComplaintComment[]
+
+  @@index([email])
+  @@index([role])
+  @@map("users")
+}
+
+model Apartment {
+  id              String          @id @default(cuid())
+  societyId       String
+  building        String
+  floor           Int
+  unitNumber      String
+  type            String          // e.g., "2BHK", "3BHK"
+  areaSqFt        Decimal?        @db.Decimal(10, 2)
+  occupancyStatus OccupancyStatus @default(VACANT)
+  maintenanceAmt  Decimal         @default(2500) @db.Decimal(10, 2)
+  notes           String?
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  society          Society          @relation(fields: [societyId], references: [id])
+  residentProfiles ResidentProfile[]
+  maintenanceBills MaintenanceBill[]
+  visitors         Visitor[]
+
+  @@unique([societyId, building, unitNumber])
+  @@index([societyId])
+  @@index([occupancyStatus])
+  @@map("apartments")
+}
+
+model ResidentProfile {
+  id           String       @id @default(cuid())
+  userId       String       @unique
+  apartmentId  String
+  residentType ResidentType @default(OWNER)
+  moveInDate   DateTime
+  moveOutDate  DateTime?
+  isActive     Boolean      @default(true)
+  emergencyContact String?
+  emergencyPhone   String?
+  notes        String?
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  user          User          @relation(fields: [userId], references: [id])
+  apartment     Apartment     @relation(fields: [apartmentId], references: [id])
+  familyMembers FamilyMember[]
+  vehicles      Vehicle[]
+  visitors      Visitor[]     @relation("ResidentVisitors")
+  complaints    Complaint[]
+
+  @@index([apartmentId])
+  @@index([userId])
+  @@map("resident_profiles")
+}
+
+model FamilyMember {
+  id                String   @id @default(cuid())
+  residentProfileId String
+  firstName         String
+  lastName          String
+  relation          String
+  age               Int?
+  phone             String?
+  isEmergencyContact Boolean @default(false)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  residentProfile ResidentProfile @relation(fields: [residentProfileId], references: [id], onDelete: Cascade)
+
+  @@index([residentProfileId])
+  @@map("family_members")
+}
+
+model Vehicle {
+  id                String   @id @default(cuid())
+  residentProfileId String
+  registrationNo    String   @unique
+  make              String
+  model             String
+  color             String
+  type              String   // CAR, MOTORCYCLE, BICYCLE, etc.
+  parkingSlot       String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  residentProfile ResidentProfile @relation(fields: [residentProfileId], references: [id], onDelete: Cascade)
+
+  @@index([residentProfileId])
+  @@index([registrationNo])
+  @@map("vehicles")
+}
+
+// ============================================================
+// VISITOR MANAGEMENT
+// ============================================================
+
+model Visitor {
+  id                String        @id @default(cuid())
+  apartmentId       String
+  residentProfileId String
+  visitorName       String
+  visitorPhone      String?
+  visitorEmail      String?
+  purpose           String
+  visitorType       VisitorType   @default(GUEST)
+  vehicleNumber     String?
+  expectedDate      DateTime
+  expectedTime      String?
+  validUntil        DateTime?
+  status            VisitorStatus @default(PENDING)
+  passCode          String        @unique
+  notes             String?
+  photoUrl          String?
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+
+  apartment       Apartment       @relation(fields: [apartmentId], references: [id])
+  residentProfile ResidentProfile @relation("ResidentVisitors", fields: [residentProfileId], references: [id])
+  approval        VisitorApproval?
+  entryLogs       VisitorEntryLog[]
+
+  @@index([apartmentId])
+  @@index([residentProfileId])
+  @@index([status])
+  @@index([expectedDate])
+  @@index([passCode])
+  @@map("visitors")
+}
+
+model VisitorApproval {
+  id          String        @id @default(cuid())
+  visitorId   String        @unique
+  approvedBy  String?
+  decision    VisitorStatus // APPROVED or REJECTED
+  reason      String?
+  decidedAt   DateTime      @default(now())
+  expiresAt   DateTime?
+  createdAt   DateTime      @default(now())
+
+  visitor Visitor @relation(fields: [visitorId], references: [id])
+
+  @@map("visitor_approvals")
+}
+
+model VisitorEntryLog {
+  id             String    @id @default(cuid())
+  visitorId      String
+  recordedBy     String    // Security staff user ID
+  checkInAt      DateTime?
+  checkOutAt     DateTime?
+  securityNotes  String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  visitor Visitor @relation(fields: [visitorId], references: [id])
+
+  @@index([visitorId])
+  @@index([checkInAt])
+  @@map("visitor_entry_logs")
+}
+
+// ============================================================
+// MAINTENANCE & PAYMENTS
+// ============================================================
+
+model MaintenanceBill {
+  id            String     @id @default(cuid())
+  apartmentId   String
+  billingMonth  Int        // 1-12
+  billingYear   Int
+  amount        Decimal    @db.Decimal(10, 2)
+  dueDate       DateTime
+  status        BillStatus @default(UNPAID)
+  paidAmount    Decimal    @default(0) @db.Decimal(10, 2)
+  notes         String?
+  generatedBy   String?
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+
+  apartment Apartment @relation(fields: [apartmentId], references: [id])
+  payments  Payment[]
+
+  @@unique([apartmentId, billingMonth, billingYear])
+  @@index([apartmentId])
+  @@index([status])
+  @@index([billingYear, billingMonth])
+  @@map("maintenance_bills")
+}
+
+model Payment {
+  id              String        @id @default(cuid())
+  billId          String
+  amount          Decimal       @db.Decimal(10, 2)
+  paymentMethod   PaymentMethod
+  paymentStatus   PaymentStatus @default(COMPLETED)
+  referenceNumber String        @unique
+  isDemo          Boolean       @default(false)
+  transactionId   String?
+  notes           String?
+  paidAt          DateTime      @default(now())
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  bill    MaintenanceBill  @relation(fields: [billId], references: [id])
+  receipt PaymentReceipt?
+
+  @@index([billId])
+  @@index([referenceNumber])
+  @@map("payments")
+}
+
+model PaymentReceipt {
+  id          String   @id @default(cuid())
+  paymentId   String   @unique
+  receiptNo   String   @unique
+  generatedAt DateTime @default(now())
+  receiptData Json     // Snapshot of payment details for receipt
+
+  payment Payment @relation(fields: [paymentId], references: [id])
+
+  @@map("payment_receipts")
+}
+
+// ============================================================
+// COMPLAINTS
+// ============================================================
+
+model Complaint {
+  id                String            @id @default(cuid())
+  residentProfileId String
+  title             String
+  description       String
+  category          String
+  priority          ComplaintPriority @default(MEDIUM)
+  status            ComplaintStatus   @default(SUBMITTED)
+  assignedTo        String?           // User ID of admin/staff
+  resolvedAt        DateTime?
+  resolutionNotes   String?
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+
+  residentProfile ResidentProfile   @relation(fields: [residentProfileId], references: [id])
+  comments        ComplaintComment[]
+
+  @@index([residentProfileId])
+  @@index([status])
+  @@index([assignedTo])
+  @@map("complaints")
+}
+
+model ComplaintComment {
+  id          String   @id @default(cuid())
+  complaintId String
+  userId      String
+  comment     String
+  isInternal  Boolean  @default(false)
+  createdAt   DateTime @default(now())
+
+  complaint Complaint @relation(fields: [complaintId], references: [id], onDelete: Cascade)
+  user      User      @relation(fields: [userId], references: [id])
+
+  @@index([complaintId])
+  @@map("complaint_comments")
+}
+
+// ============================================================
+// AMENITIES & BOOKINGS
+// ============================================================
+
+model Amenity {
+  id           String  @id @default(cuid())
+  societyId    String
+  name         String
+  description  String?
+  location     String?
+  capacity     Int?
+  rules        String?
+  openingTime  String  // "06:00"
+  closingTime  String  // "22:00"
+  slotDuration Int     @default(60)   // minutes
+  isActive     Boolean @default(true)
+  requiresApproval Boolean @default(false)
+  imageUrl     String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  society  Society          @relation(fields: [societyId], references: [id])
+  bookings AmenityBooking[]
+
+  @@index([societyId])
+  @@map("amenities")
+}
+
+model AmenityBooking {
+  id          String        @id @default(cuid())
+  amenityId   String
+  bookedBy    String        // User ID
+  date        DateTime      @db.Date
+  startTime   String        // "09:00"
+  endTime     String        // "10:00"
+  purpose     String?
+  status      BookingStatus @default(PENDING)
+  approvedBy  String?
+  cancelledBy String?
+  cancelReason String?
+  notes       String?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  amenity Amenity @relation(fields: [amenityId], references: [id])
+  booker  User    @relation(fields: [bookedBy], references: [id])
+
+  @@index([amenityId])
+  @@index([bookedBy])
+  @@index([date])
+  @@index([status])
+  @@map("amenity_bookings")
+}
+
+// ============================================================
+// ANNOUNCEMENTS
+// ============================================================
+
+model Announcement {
+  id          String               @id @default(cuid())
+  societyId   String
+  createdBy   String               // User ID
+  title       String
+  content     String
+  category    AnnouncementCategory @default(GENERAL)
+  status      AnnouncementStatus   @default(DRAFT)
+  publishedAt DateTime?
+  expiresAt   DateTime?
+  isPinned    Boolean              @default(false)
+  createdAt   DateTime             @default(now())
+  updatedAt   DateTime             @updatedAt
+
+  society Society @relation(fields: [societyId], references: [id])
+
+  @@index([societyId])
+  @@index([status])
+  @@index([publishedAt])
+  @@map("announcements")
+}
+
+// ============================================================
+// NOTIFICATIONS
+// ============================================================
+
+model Notification {
+  id        String           @id @default(cuid())
+  userId    String
+  type      NotificationType
+  title     String
+  message   String
+  isRead    Boolean          @default(false)
+  readAt    DateTime?
+  entityId  String?          // ID of related entity
+  entityType String?         // Type of related entity
+  metadata  Json?
+  createdAt DateTime         @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, isRead])
+  @@index([userId, createdAt])
+  @@map("notifications")
+}
+
+// ============================================================
+// AUDIT LOG
+// ============================================================
+
+model AuditLog {
+  id         String      @id @default(cuid())
+  actorId    String?
+  action     AuditAction
+  entityType String?
+  entityId   String?
+  details    Json?
+  ipAddress  String?
+  userAgent  String?
+  createdAt  DateTime    @default(now())
+
+  actor User? @relation("AuditActor", fields: [actorId], references: [id])
+
+  @@index([actorId])
+  @@index([action])
+  @@index([createdAt])
+  @@map("audit_logs")
+}

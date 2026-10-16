@@ -1,0 +1,26 @@
+{
+  "name": "nivasa-smart-society",
+  "version": "1.0.0",
+  "description": "Nivasa — Smart Society Management System",
+  "private": true,
+  "workspaces": [
+    "frontend",
+    "backend"
+  ],
+  "scripts": {
+    "dev": "npx concurrently --kill-others-on-fail -n \"db,backend,frontend\" -c \"magenta,cyan,green\" \"npm run start:db\" \"npm run dev:backend\" \"npm run dev:frontend\"",
+    "start:db": "node scripts/start-db.js",
+    "dev:backend": "npm run dev --workspace=backend",
+    "dev:frontend": "npm run dev --workspace=frontend",
+    "build": "npm run build --workspace=backend && npm run build --workspace=frontend",
+    "test": "npm run test --workspace=backend && npm run test --workspace=frontend",
+    "db:migrate": "npm run db:migrate --workspace=backend",
+    "db:seed": "npm run db:seed --workspace=backend",
+    "db:reset": "npm run db:reset --workspace=backend",
+    "db:studio": "npm run db:studio --workspace=backend"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.5",
+    "embedded-postgres": "^18.4.0-beta.17"
+  }
+}
