@@ -96,7 +96,7 @@ export default function AdminLayout() {
     <div className="flex h-screen bg-gray-50 overflow-hidden">
       {/* Desktop Sidebar */}
       <aside className={clsx(
-        'hidden lg:flex flex-col bg-white border-r border-gray-200 transition-all duration-300',
+        'relative hidden lg:flex flex-shrink-0 flex-col bg-white border-r border-gray-200 transition-all duration-300',
         collapsed ? 'w-16' : 'w-60'
       )}>
         <SidebarContent />
@@ -151,7 +151,7 @@ export default function AdminLayout() {
 
         {/* Page Content */}
         <main className="flex-1 overflow-y-auto">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          <div className="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
             <Outlet />
           </div>
         </main>

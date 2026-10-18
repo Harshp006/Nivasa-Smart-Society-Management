@@ -195,7 +195,7 @@ export default function AdminAnnouncements() {
                 </button>
               </div>
 
-              <div className="text-sm text-gray-700 leading-relaxed whitespace-pre-line pl-13">
+              <div className="text-sm text-gray-700 leading-relaxed whitespace-pre-line pl-[3.25rem]">
                 {a.content}
               </div>
             </div>

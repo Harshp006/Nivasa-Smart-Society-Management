@@ -35,7 +35,7 @@ export default function SecurityLayout() {
         </div>
       </div>
 
-      <nav className="flex-1 py-4 px-3 space-y-0.5">
+      <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-0.5 scrollbar-hide">
         {navItems.map(({ to, icon: Icon, label }) => (
           <NavLink key={to} to={to} onClick={() => setMobileOpen(false)}
             className={({ isActive }) => clsx('sidebar-link', isActive && 'active')}>
@@ -59,20 +59,20 @@ export default function SecurityLayout() {
 
   return (
     <div className="flex h-screen bg-gray-50 overflow-hidden">
-      <aside className="hidden lg:flex flex-col w-56 bg-white border-r border-gray-200"><SidebarContent /></aside>
+      <aside className="hidden lg:flex flex-col w-60 flex-shrink-0 bg-white border-r border-gray-200"><SidebarContent /></aside>
 
       {mobileOpen && (
         <div className="fixed inset-0 z-50 lg:hidden">
           <div className="absolute inset-0 bg-black/50" onClick={() => setMobileOpen(false)} />
-          <aside className="relative flex flex-col w-56 h-full bg-white border-r">
-            <button onClick={() => setMobileOpen(false)} className="absolute top-4 right-4"><X className="w-5 h-5" /></button>
+          <aside className="relative flex flex-col w-64 h-full bg-white border-r border-gray-200">
+            <button onClick={() => setMobileOpen(false)} className="absolute top-4 right-4 p-1 rounded-lg hover:bg-gray-100"><X className="w-5 h-5" /></button>
             <SidebarContent />
           </aside>
         </div>
       )}
 
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-        <header className="h-14 bg-white border-b border-gray-200 flex items-center justify-between px-4">
+        <header className="h-14 flex-shrink-0 bg-white border-b border-gray-200 flex items-center justify-between px-4">
           <button onClick={() => setMobileOpen(true)} className="lg:hidden p-1.5 rounded-lg hover:bg-gray-100"><Menu className="w-5 h-5" /></button>
           <div className="flex items-center gap-2 ml-auto">
             <div className="w-7 h-7 bg-blue-100 rounded-full flex items-center justify-center">
@@ -83,7 +83,7 @@ export default function SecurityLayout() {
         </header>
 
         <main className="flex-1 overflow-y-auto">
-          <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          <div className="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
             <Outlet />
           </div>
         </main>

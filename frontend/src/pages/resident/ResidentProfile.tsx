@@ -60,7 +60,7 @@ export default function ResidentProfile() {
   if (loading) return <Loading fullPage text="Loading resident profile..." />;
 
   return (
-    <div className="space-y-6 max-w-4xl">
+    <div className="space-y-6">
       <PageHeader
         title="My Profile & Apartment"
         description="View your registered residency records and security credentials"

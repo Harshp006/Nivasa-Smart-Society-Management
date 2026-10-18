@@ -47,27 +47,28 @@ export default function AdminReports() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-xl font-bold text-gray-900">Analytics & Intelligence</h1>
-          <p className="text-sm text-gray-500 mt-0.5">Comprehensive audit reports across finance, security, and facility maintenance</p>
-        </div>
-        <div className="flex items-center gap-2">
-          <label className="text-xs font-semibold text-gray-500">Year:</label>
-          <select
-            className="select text-sm w-32"
-            value={selectedYear}
-            onChange={(e) => setSelectedYear(parseInt(e.target.value))}
-          >
-            {[2024, 2025, 2026, 2027].map((y) => (
-              <option key={y} value={y}>{y}</option>
-            ))}
-          </select>
-        </div>
-      </div>
+      <PageHeader
+        title="Analytics & Intelligence"
+        description="Comprehensive audit reports across finance, security, and facility maintenance"
+        action={
+          <div className="flex items-center gap-2">
+            <label htmlFor="report-year" className="text-xs font-semibold text-gray-500">Year:</label>
+            <select
+              id="report-year"
+              className="select text-sm w-32"
+              value={selectedYear}
+              onChange={(e) => setSelectedYear(parseInt(e.target.value))}
+            >
+              {[2024, 2025, 2026, 2027].map((y) => (
+                <option key={y} value={y}>{y}</option>
+              ))}
+            </select>
+          </div>
+        }
+      />
 
       {/* KPI Highlights */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         <StatCard
           title="Maintenance Collection Efficiency"
           value={`${collectionRate}%`}

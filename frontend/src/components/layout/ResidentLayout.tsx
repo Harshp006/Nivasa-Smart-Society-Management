@@ -74,7 +74,7 @@ export default function ResidentLayout() {
 
   return (
     <div className="flex h-screen bg-gray-50 overflow-hidden">
-      <aside className="hidden lg:flex flex-col w-60 bg-white border-r border-gray-200">
+      <aside className="hidden lg:flex flex-col w-60 flex-shrink-0 bg-white border-r border-gray-200">
         <SidebarContent />
       </aside>
 
@@ -105,7 +105,7 @@ export default function ResidentLayout() {
         </header>
 
         <main className="flex-1 overflow-y-auto">
-          <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          <div className="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
             <Outlet />
           </div>
         </main>

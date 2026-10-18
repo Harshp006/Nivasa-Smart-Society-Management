@@ -43,7 +43,7 @@ export default function SecurityGateLog() {
       />
 
       {/* Date Filter Bar */}
-      <div className="card p-3">
+      <div className="card p-4">
         <div className="flex items-center gap-3">
           <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide flex items-center gap-1.5">
             <Filter className="w-3.5 h-3.5" /> Date:

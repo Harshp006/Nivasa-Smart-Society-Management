@@ -11,6 +11,7 @@
 
   html {
     font-family: 'Inter', system-ui, sans-serif;
+    font-synthesis: none;
   }
 
   body {
@@ -51,7 +52,8 @@
     @apply px-6 py-3 text-base;
   }
 
-  .input {
+  .input,
+  .select {
     @apply block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500 disabled:bg-gray-50 disabled:text-gray-500 transition-colors duration-150;
   }
 
@@ -60,7 +62,7 @@
   }
 
   .card {
-    @apply bg-white rounded-xl border border-gray-200 shadow-sm;
+    @apply bg-white rounded-xl border border-gray-200 p-6 shadow-sm;
   }
 
   .card-header {
@@ -120,7 +122,15 @@
   }
 
   .sidebar-link {
-    @apply flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-600 hover:bg-brand-50 hover:text-brand-700 transition-all duration-150;
+    @apply flex h-10 items-center gap-3 px-3 rounded-lg text-sm font-medium text-gray-600 hover:bg-brand-50 hover:text-brand-700 transition-all duration-150;
+  }
+
+  .sidebar-link svg {
+    @apply h-4 w-4 flex-shrink-0;
+  }
+
+  button:has(> svg:only-child) {
+    @apply inline-flex items-center justify-center;
   }
 
   .sidebar-link.active {
@@ -144,5 +154,11 @@
 
   .scrollbar-hide::-webkit-scrollbar {
     display: none;
+  }
+
+  @media (max-width: 639px) {
+    form .grid {
+      grid-template-columns: minmax(0, 1fr);
+    }
   }
 }
